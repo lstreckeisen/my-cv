@@ -3,7 +3,7 @@
     <v-container>
       <v-row>
         <v-col cols="12">
-          <h1>Create an account</h1>
+          <h1>{{ t('account.create.title') }}</h1>
         </v-col>
       </v-row>
       <v-row>
@@ -13,42 +13,42 @@
               <v-col cols="12" md="6">
                 <v-row>
                   <v-col cols="12">
-                    <h2>Personal Data</h2>
+                    <h2>{{ t('account.personalData') }}</h2>
                   </v-col>
                 </v-row>
                 <v-row>
                   <v-col cols="12">
                     <v-text-field
                       v-model="formState.firstName"
-                      label="First Name"
+                      :label="t('fields.firstName')"
                       :error-messages="firstNameErrors"
                     />
                   </v-col>
                   <v-col cols="12">
                     <v-text-field
                       v-model="formState.lastName"
-                      label="Last Name"
+                      :label="t('fields.lastName')"
                       :error-messages="lastNameErrors"
                     />
                   </v-col>
                   <v-col cols="12">
                     <v-text-field
                       v-model="formState.email"
-                      label="E-Mail"
+                      :label="t('fields.email')"
                       :error-messages="emailErrors"
                     />
                   </v-col>
                   <v-col cols="12">
                     <v-text-field
                       v-model="formState.phone"
-                      label="Phone"
+                      :label="t('fields.phone')"
                       :error-messages="phoneErrors"
                     />
                   </v-col>
                   <v-col cols="12">
                     <v-date-input
                       v-model="formState.birthday"
-                      label="Birthday"
+                      :label="t('fields.birthday')"
                       :error-messages="birthdayErrors"
                     />
                   </v-col>
@@ -58,42 +58,42 @@
               <v-col cols="12" md="6">
                 <v-row>
                   <v-col cols="12">
-                    <h2>Address</h2>
+                    <h2>{{ t('account.address') }}</h2>
                   </v-col>
                 </v-row>
                 <v-row>
                   <v-col cols="12" sm="9">
                     <v-text-field
                       v-model="formState.street"
-                      label="Street"
+                      :label="t('fields.street')"
                       :error-messages="streetErrors"
                     />
                   </v-col>
                   <v-col cols="12" sm="3">
                     <v-text-field
                       v-model="formState.houseNumber"
-                      label="Number"
+                      :label="t('fields.houseNumber')"
                       :error-messages="houseNumberErrors"
                     />
                   </v-col>
                   <v-col cols="12" sm="3">
                     <v-text-field
                       v-model="formState.postcode"
-                      label="Postcode"
+                      :label="t('fields.postcode')"
                       :error-messages="postcodeErrors"
                     />
                   </v-col>
                   <v-col cols="12" sm="9">
                     <v-text-field
                       v-model="formState.city"
-                      label="City"
+                      :label="t('fields.city')"
                       :error-messages="cityErrors"
                     />
                   </v-col>
                   <v-col cols="12" sm="12">
                     <v-autocomplete
                       v-model="formState.country"
-                      label="Country"
+                      :label="t('fields.country')"
                       :items="countries"
                       item-title="name"
                       item-value="countryCode"
@@ -107,21 +107,21 @@
               <v-col cols="12" md="6">
                 <v-row>
                   <v-col cols="12">
-                    <h2>Password</h2>
+                    <h2>{{ t('fields.password') }}</h2>
                   </v-col>
                 </v-row>
                 <v-row>
                   <v-col cols="12">
                     <password-input
                       v-model="formState.password"
-                      label="Password"
+                      :label="t('fields.password')"
                       :error-messages="passwordErrors"
                     />
                   </v-col>
                   <v-col cols="12">
                     <password-input
                       v-model="formState.confirmedPassword"
-                      label="Confirm Password"
+                      :label="t('fields.confirmPassword')"
                       :error-messages="confirmedPasswordErrors"
                     />
                   </v-col>
@@ -130,7 +130,7 @@
               <v-col cols="12" md="6">
                 <v-row>
                   <v-col cols="12">
-                    <h3>Password Requirements</h3>
+                    <h3>{{ t('account.passwordRequirements') }}</h3>
                   </v-col>
                 </v-row>
                 <v-row>
@@ -151,7 +151,12 @@
             </v-row>
             <v-row>
               <v-col cols="12">
-                <v-btn color="primary" @click.stop="signUp">Sign Up</v-btn>
+                <v-btn
+                  color="primary"
+                  type="submit"
+                  @click.prevent="signUp"
+                  :text="t('account.create.submit')"
+                />
               </v-col>
             </v-row>
           </v-container>
@@ -159,8 +164,8 @@
       </v-row>
       <notification
         v-if="didCountryLoadFail"
-        title="Failed to load countries"
-        message="Try again later or contact the administrator if the problem isn't resolved"
+        :title="t('country.loadingError.title')"
+        :message="t('country.loadingError.message')"
       />
     </v-container>
   </v-main>
@@ -172,18 +177,24 @@ import router from '@/router'
 import { VDateInput } from 'vuetify/labs/components'
 import { computed, type ComputedRef, reactive, ref } from 'vue'
 import PasswordInput from '@/components/PasswordInput.vue'
-import type { AccountDto } from '@/dto/AccountDto'
 import type { ErrorDto } from '@/dto/ErrorDto'
-import { email, helpers, required } from '@vuelidate/validators'
 import useVuelidate from '@vuelidate/core'
 import type { CountryDto } from '@/dto/CountryDto'
 import countryApi from '@/api/CountryApi'
 import Notification from '@/components/Notification.vue'
 import { getErrorMessages } from '@/services/FormHelper'
+import { useI18n } from 'vue-i18n'
+import { email, required, withI18nMessage } from '@/validation/validators'
+import type { SignupRequestDto } from '@/dto/SignUpRequestDto'
+import { convertDateToString } from '@/services/DateHelper'
 
 if (accountApi.isUserLoggedIn()) {
   await router.push({ name: 'home' })
 }
+
+const { t } = useI18n({
+  useScope: 'global'
+})
 
 const countries = ref<Array<CountryDto>>([])
 const errorMessages = ref<{ [key: string]: string }>({})
@@ -195,7 +206,22 @@ try {
   didCountryLoadFail.value = true
 }
 
-const formState = reactive({
+type FormState = {
+  firstName?: string
+  lastName?: string
+  email?: string
+  phone?: string
+  birthday?: Date
+  street?: string
+  houseNumber?: string
+  postcode?: string
+  city?: string
+  country?: string
+  password?: string
+  confirmedPassword?: string
+}
+
+const formState = reactive<FormState>({
   firstName: undefined,
   lastName: undefined,
   email: undefined,
@@ -212,7 +238,7 @@ const formState = reactive({
 
 const passwordRequirements = computed(() => [
   {
-    name: 'Must have at least 8 characters',
+    name: t('passwordRequirements.length', { length: '8' }),
     predicate: () => {
       if (formState.password == null) {
         return false
@@ -222,7 +248,7 @@ const passwordRequirements = computed(() => [
     }
   },
   {
-    name: 'Must not contain whitespaces',
+    name: t('passwordRequirements.whitespaces'),
     predicate: () => {
       if (formState.password == null) {
         return false
@@ -232,7 +258,7 @@ const passwordRequirements = computed(() => [
     }
   },
   {
-    name: 'Must contain at least one digit',
+    name: t('passwordRequirements.digits'),
     predicate: () => {
       if (formState.password == null) {
         return false
@@ -242,7 +268,7 @@ const passwordRequirements = computed(() => [
     }
   },
   {
-    name: 'Must contain at least one special character',
+    name: t('passwordRequirements.specialChars'),
     predicate: () => {
       if (formState.password == null) {
         return false
@@ -252,7 +278,7 @@ const passwordRequirements = computed(() => [
     }
   },
   {
-    name: 'Must contain at least one uppercase letter',
+    name: t('passwordRequirements.uppercase'),
     predicate: () => {
       if (formState.password == null) {
         return false
@@ -262,7 +288,7 @@ const passwordRequirements = computed(() => [
     }
   },
   {
-    name: 'Must contain at least one lowercase letter',
+    name: t('passwordRequirements.lowercase'),
     predicate: () => {
       if (formState.password == null) {
         return false
@@ -272,7 +298,7 @@ const passwordRequirements = computed(() => [
     }
   },
   {
-    name: 'Passwords must match',
+    name: t('passwordRequirements.match'),
     predicate: () => {
       if (formState.password == null) {
         return false
@@ -282,32 +308,34 @@ const passwordRequirements = computed(() => [
     }
   }
 ])
-const passwordValidator = () => passwordRequirements.value.every((r) => r.predicate())
+const passwordValidator = withI18nMessage(() =>
+  passwordRequirements.value.every((r) => r.predicate())
+)
 
 const rules = {
-  firstName: { required: helpers.withMessage('First Name must not be blank', required) },
-  lastName: { required: helpers.withMessage('Last Name must not be blank', required) },
+  firstName: { required },
+  lastName: { required },
   email: {
-    required: helpers.withMessage('E-Mail must not be blank', required),
-    email: helpers.withMessage('E-Mail is not valid', email)
+    required,
+    email
   },
-  phone: { required: helpers.withMessage('Phone must not be blank', required) },
-  birthday: { required: helpers.withMessage('Birthday must not be blank', required) },
-  street: { required: helpers.withMessage('Street must not be blank', required) },
+  phone: { required },
+  birthday: { required },
+  street: { required },
   houseNumber: {},
-  postcode: { required: helpers.withMessage('Postcode must not be blank', required) },
-  city: { required: helpers.withMessage('City must not be blank', required) },
-  country: { required: helpers.withMessage('Country must not be blank', required) },
+  postcode: { required },
+  city: { required },
+  country: { required },
   password: {
-    required: helpers.withMessage('Password must not be blank', required),
-    passwordValidator: helpers.withMessage('Password must fulfill requirements', passwordValidator)
+    required,
+    passwordValidator
   },
   confirmedPassword: {
-    required: helpers.withMessage('Confirmed Password must not be blank', required)
+    required
   }
 }
 
-const form = useVuelidate(rules, formState)
+const form = useVuelidate<FormState>(rules, formState)
 
 async function signUp() {
   const isValid = await form.value.$validate()
@@ -315,24 +343,24 @@ async function signUp() {
     return
   }
 
-  const account: AccountDto = {
-    firstName: formState.firstName!,
-    lastName: formState.lastName!,
-    email: formState.email!,
-    phone: formState.phone!,
-    birthday: formState.birthday!,
-    street: formState.street!,
+  const account: SignupRequestDto = {
+    firstName: formState.firstName,
+    lastName: formState.lastName,
+    email: formState.email,
+    phone: formState.phone,
+    birthday: convertDateToString(formState.birthday),
+    street: formState.street,
     houseNumber: formState.houseNumber,
-    postcode: formState.postcode!,
-    city: formState.city!,
-    country: formState.country!,
-    password: formState.password!
+    postcode: formState.postcode,
+    city: formState.city,
+    country: formState.country,
+    password: formState.password
   }
 
   try {
     await accountApi.signUp(account)
     errorMessages.value = {}
-    await router.push({ name: 'home' }) // TODO: change to profile
+    await router.push({ name: 'account' })
   } catch (e) {
     const error = e as ErrorDto
     errorMessages.value = error.errors || {}
@@ -354,7 +382,7 @@ const postcodeErrors = getErrors('postcode')
 const cityErrors = getErrors('city')
 const countryErrors = getErrors('country')
 const passwordErrors = getErrors('password')
-const confirmedPasswordErrors = getErrors('confirmedPassword')
+const confirmedPasswordErrors = getErrors('confirmPassword')
 </script>
 
 <style lang="scss" scoped>
